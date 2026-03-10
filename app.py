@@ -728,7 +728,7 @@ elif page == "Loan Application Form":
 
     st.write("")
 
-    with st.expander("Advanced Financial History (Optional)"):
+    with st.expander("Advanced Financial History"):
 
         st.markdown("#### Repayment Status History")
         st.markdown(
