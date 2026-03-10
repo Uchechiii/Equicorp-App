@@ -652,6 +652,7 @@ if page == "Advisor Dashboard":
 # ----------------------------
 # Loan Application Form
 # ----------------------------
+    st.info("All required fields must be completed before submitting the application.")
 elif page == "Loan Application Form":
     st.markdown('<div class="page-card">', unsafe_allow_html=True)
     st.markdown('<div class="section-title">Loan Application Form</div>', unsafe_allow_html=True)
@@ -788,6 +789,32 @@ elif page == "Loan Application Form":
     submit = st.button("Analyze Application", use_container_width=True)
 
     if submit:
+
+        errors = []
+
+        if applicant_name.strip() == "":
+            errors.append("Applicant name is required")
+
+        if sex == "Select":
+            errors.append("Please select applicant sex")
+
+        if education == "Select":
+            errors.append("Please select education level")
+
+        if marriage == "Select":
+            errors.append("Please select marital status")
+
+        if employment_status == "Select":
+            errors.append("Please select employment status")
+
+        if limit_bal <= 0:
+            errors.append("Credit limit must be greater than 0")
+
+        if errors:
+            for err in errors:
+                st.error(err)
+            st.stop()
+
         st.session_state.form_data = {
             "applicant_name": applicant_name,
             "application_id": application_id,
@@ -884,10 +911,47 @@ else:
                 </div>
             """, unsafe_allow_html=True)
 
-            if st.session_state.decision == "Low Risk Applicant":
-                st.success("Approved as Low Risk Applicant")
+            prob = st.session_state.probability
+
+            if prob < 0.4:
+
+                st.markdown(
+                    """
+                    <div style="
+                        background-color:#1f7a4d;
+                        padding:14px;
+                        border-radius:10px;
+                        color:white;
+                        font-weight:700;
+                        text-align:center;
+                        font-size:16px;
+                    ">
+                    Approved as Low Risk Applicant
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                st.balloons()
+
             else:
-                st.error("Flagged as High Risk Applicant")
+
+                st.markdown(
+                    """
+                    <div style="
+                        background-color:#b91c1c;
+                        padding:14px;
+                        border-radius:10px;
+                        color:white;
+                        font-weight:700;
+                        text-align:center;
+                        font-size:16px;
+                    ">
+                    Flagged for Risk Review
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
             st.write("")
             st.markdown("### Fairness Review")
@@ -924,7 +988,51 @@ else:
 
     st.write("")
 
-    if st.button("Evaluate Another Application"):
-        st.session_state.current_page = "Loan Application Form"
+
+    if st.button("Start New Evaluation"):
+
+        new_id = f"EQ-{random.randint(1000,9999)}"
+
+        st.session_state.form_data = {
+            "applicant_name": "",
+            "application_id": new_id,
+
+            "limit_bal": 0,
+            "sex": "Select",
+            "education": "Select",
+            "marriage": "Select",
+            "age": 18,
+
+            "pay_0": 0,
+            "pay_2": 0,
+            "pay_3": 0,
+            "pay_4": 0,
+            "pay_5": 0,
+            "pay_6": 0,
+
+            "bill_amt1": 0,
+            "bill_amt2": 0,
+            "bill_amt3": 0,
+            "bill_amt4": 0,
+            "bill_amt5": 0,
+            "bill_amt6": 0,
+
+            "pay_amt1": 0,
+            "pay_amt2": 0,
+            "pay_amt3": 0,
+            "pay_amt4": 0,
+            "pay_amt5": 0,
+            "pay_amt6": 0,
+
+            "employment_status": "Select",
+            "monthly_income": 0,
+            "review_note": ""
+        }
+
         st.session_state.prediction_done = False
+        st.session_state.probability = None
+        st.session_state.decision = None
+
+        st.session_state.current_page = "Loan Application Form"
+
         st.rerun()
