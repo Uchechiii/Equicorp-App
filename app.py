@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import random
 
 # ----------------------------
 # Page setup
@@ -496,7 +497,49 @@ with header_right:
 
     with top3:
         if st.button("Start New Application", key="new_app_btn"):
+
+            new_id = f"EQ-{random.randint(1000,9999)}"
+
+            st.session_state.form_data = {
+                "applicant_name": "",
+                "application_id": new_id,
+                "limit_bal": 0,
+                "sex": "Select",
+                "education": "Select",
+                "marriage": "Select",
+                "age": 18,
+
+                "pay_0": 0,
+                "pay_2": 0,
+                "pay_3": 0,
+                "pay_4": 0,
+                "pay_5": 0,
+                "pay_6": 0,
+
+                "bill_amt1": 0,
+                "bill_amt2": 0,
+                "bill_amt3": 0,
+                "bill_amt4": 0,
+                "bill_amt5": 0,
+                "bill_amt6": 0,
+
+                "pay_amt1": 0,
+                "pay_amt2": 0,
+                "pay_amt3": 0,
+                "pay_amt4": 0,
+                "pay_amt5": 0,
+                "pay_amt6": 0,
+
+                "employment_status": "Select",
+                "monthly_income": 0,
+                "review_note": ""
+            }
+
+            st.session_state.prediction_done = False
+            st.session_state.probability = None
+            st.session_state.decision = None
             st.session_state.current_page = "Loan Application Form"
+
             st.rerun()
 
 st.write("")
@@ -623,34 +666,58 @@ elif page == "Loan Application Form":
     st.markdown("### Applicant Information")
     a1, a2 = st.columns(2)
     with a1:
-        applicant_name = st.text_input("Applicant Name", value=data["applicant_name"])
-        age = st.number_input("Applicant Age", min_value=18, max_value=100, value=int(data["age"]))
-        sex = st.selectbox("Applicant Sex", ["Male", "Female"], index=0 if data["sex"] == "Male" else 1)
+        applicant_name = st.text_input("Applicant Name", value=data.get("applicant_name", ""))
+        age = st.number_input(
+            "Age",
+            min_value=18,
+            max_value=100,
+            value=int(data.get("age", 18))
+        )
+        sex_options = ["Select", "Male", "Female"]
+        sex = st.selectbox(
+            "Sex",
+            sex_options,
+            index=sex_options.index(data.get("sex", "Select"))
+        )
+        marriage_options = ["Select", "Married", "Single", "Other"]
         marriage = st.selectbox(
             "Marital Status",
-            ["Married", "Single", "Other"],
-            index=["Married", "Single", "Other"].index(data["marriage"])
+            marriage_options,
+            index=marriage_options.index(data.get("marriage", "Select"))
         )
 
     with a2:
-        application_id = st.text_input("Application ID", value=data["application_id"])
-        education = st.selectbox(
-            "Education Level",
-            ["Graduate School", "University", "High School", "Other"],
-            index=["Graduate School", "University", "High School", "Other"].index(data["education"])
+        application_id = st.text_input(
+            "Application ID",
+            value=data.get("application_id", ""), disabled=True
         )
+        education_options = ["Select", "Graduate School", "University", "High School", "Other"]
+        education = st.selectbox(
+                    "Education Level",
+                    education_options,
+                    index=education_options.index(data.get("education", "Select"))
+        )
+        employment_options = ["Select", "Full-Time", "Part-Time", "Self-Employed", "Unemployed"]
         employment_status = st.selectbox(
             "Employment Status",
-            ["Full-Time", "Part-Time", "Self-Employed", "Unemployed"],
-            index=["Full-Time", "Part-Time", "Self-Employed", "Unemployed"].index(data["employment_status"])
+            employment_options,
+            index=employment_options.index(data.get("employment_status", "Select"))
         )
-        monthly_income = st.number_input("Monthly Income", min_value=0, value=int(data["monthly_income"]))
+        monthly_income = st.number_input(
+            "Monthly Income",
+            min_value=0,
+            value=int(data.get("monthly_income", 0))
+        )
 
     st.write("")
     st.markdown("### Loan Details")
     b1, b2 = st.columns(2)
     with b1:
-        limit_bal = st.number_input("Credit Limit", min_value=0, value=int(data["limit_bal"]))
+        limit_bal = st.number_input(
+            "Credit Limit (LIMIT_BAL)",
+            min_value=0,
+            value=int(data.get("limit_bal", 0))
+        )
     with b2:
         review_note = st.text_area(
             "Advisor Notes",
@@ -671,16 +738,16 @@ elif page == "Loan Application Form":
         c1, c2, c3 = st.columns(3)
 
         with c1:
-            pay_0 = st.number_input("PAY_0 (Last Month)", value=int(data.get("pay_0", 0)))
-            pay_2 = st.number_input("PAY_2 (2 Months Ago)", value=int(data.get("pay_2", 0)))
+            pay_0 = st.number_input("PAY_0 (Last Month)")
+            pay_2 = st.number_input("PAY_2 (2 Months Ago)")
 
         with c2:
-            pay_3 = st.number_input("PAY_3 (3 Months Ago)", value=int(data.get("pay_3", 0)))
-            pay_4 = st.number_input("PAY_4 (4 Months Ago)", value=int(data.get("pay_4", 0)))
+            pay_3 = st.number_input("PAY_3 (3 Months Ago)")
+            pay_4 = st.number_input("PAY_4 (4 Months Ago)")
 
         with c3:
-            pay_5 = st.number_input("PAY_5 (5 Months Ago)", value=int(data.get("pay_5", 0)))
-            pay_6 = st.number_input("PAY_6 (6 Months Ago)", value=int(data.get("pay_6", 0)))
+            pay_5 = st.number_input("PAY_5 (5 Months Ago)")
+            pay_6 = st.number_input("PAY_6 (6 Months Ago)")
 
         st.write("")
 
@@ -689,16 +756,16 @@ elif page == "Loan Application Form":
         d1, d2, d3 = st.columns(3)
 
         with d1:
-            bill_amt1 = st.number_input("BILL_AMT1 (Last Month Bill)", value=int(data.get("bill_amt1", 2500)))
-            bill_amt2 = st.number_input("BILL_AMT2", value=int(data.get("bill_amt2", 2200)))
+            bill_amt1 = st.number_input("BILL_AMT1 (Last Month Bill)")
+            bill_amt2 = st.number_input("BILL_AMT2")
 
         with d2:
-            bill_amt3 = st.number_input("BILL_AMT3", value=int(data.get("bill_amt3", 2100)))
-            bill_amt4 = st.number_input("BILL_AMT4", value=int(data.get("bill_amt4", 2000)))
+            bill_amt3 = st.number_input("BILL_AMT3")
+            bill_amt4 = st.number_input("BILL_AMT4")
 
         with d3:
-            bill_amt5 = st.number_input("BILL_AMT5", value=int(data.get("bill_amt5", 1800)))
-            bill_amt6 = st.number_input("BILL_AMT6", value=int(data.get("bill_amt6", 1600)))
+            bill_amt5 = st.number_input("BILL_AMT5")
+            bill_amt6 = st.number_input("BILL_AMT6")
 
         st.write("")
 
@@ -707,16 +774,16 @@ elif page == "Loan Application Form":
         e1, e2, e3 = st.columns(3)
 
         with e1:
-            pay_amt1 = st.number_input("PAY_AMT1 (Last Payment)", value=int(data.get("pay_amt1", 500)))
-            pay_amt2 = st.number_input("PAY_AMT2", value=int(data.get("pay_amt2", 500)))
+            pay_amt1 = st.number_input("PAY_AMT1 (Last Payment)")
+            pay_amt2 = st.number_input("PAY_AMT2")
 
         with e2:
-            pay_amt3 = st.number_input("PAY_AMT3", value=int(data.get("pay_amt3", 450)))
-            pay_amt4 = st.number_input("PAY_AMT4", value=int(data.get("pay_amt4", 400)))
+            pay_amt3 = st.number_input("PAY_AMT3")
+            pay_amt4 = st.number_input("PAY_AMT4")
 
         with e3:
-            pay_amt5 = st.number_input("PAY_AMT5", value=int(data.get("pay_amt5", 350)))
-            pay_amt6 = st.number_input("PAY_AMT6", value=int(data.get("pay_amt6", 300)))
+            pay_amt5 = st.number_input("PAY_AMT5")
+            pay_amt6 = st.number_input("PAY_AMT6")
 
     submit = st.button("Analyze Application", use_container_width=True)
 
